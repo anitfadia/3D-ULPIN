@@ -5,325 +5,277 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>3D ULPIN</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#0a0e15; --panel:#121826; --panel-2:#161e30;
-    --border:#263047; --border-soft:#1c2438;
-    --text:#e7ecf5; --muted:#8291ab;
-    --teal:#38d4c4; --teal-dim:#1f5f59;
-    --amber:#eaa64a; --amber-dim:#6b4c22;
-    --danger:#e15b5b; --danger-dim:#5a2626;
-    --green:#5fae72; --green-dim:#2c4a34;
-    --purple:#9b7fe0; --purple-dim:#3f3568;
-    --brown:#b98a5e; --brown-dim:#4a3626;
-    --olive:#9ca35a; --olive-dim:#3f4229;
-    --gov:#38d4c4; --citizen:#8fb0f5;
-  }
-  *{ box-sizing:border-box; }
-  html,body{ margin:0; padding:0; height:100%; background:var(--bg); color:var(--text);
-    font-family:'Space Grotesk',sans-serif; overflow:hidden; }
-  .mono{ font-family:'IBM Plex Mono',monospace; }
-  #app{ position:relative; width:100vw; height:100vh; }
-
-  #topbar{ position:absolute; top:0; left:0; right:0; z-index:20; display:flex;
-    align-items:center; justify-content:space-between; padding:14px 22px;
-    background:linear-gradient(180deg, rgba(10,14,21,0.95), rgba(10,14,21,0)); pointer-events:none; }
-  #topbar .title{ font-weight:700; font-size:15px; }
-  #topbar .title span{ color:var(--teal); }
-  #topbar .subtitle{ font-size:11px; color:var(--muted); margin-top:2px; }
-  #statusLine{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:7px 12px;
-    border:1px solid var(--border); border-radius:6px; background:rgba(18,24,38,0.9);
-    color:var(--muted); pointer-events:auto; min-width:320px; text-align:right; }
-  #statusLine.ok{ color:var(--teal); border-color:var(--teal-dim); }
-  #statusLine .dot{ display:inline-block; width:6px; height:6px; border-radius:50%;
-    background:var(--muted); margin-right:7px; position:relative; top:-1px; }
-  #statusLine.ok .dot{ background:var(--teal); box-shadow:0 0 6px var(--teal); }
-
-  #backBtn{ position:absolute; top:18px; left:22px; z-index:25; display:none;
-    align-items:center; gap:6px; background:var(--panel); border:1px solid var(--border);
-    color:var(--text); font-size:12.5px; padding:8px 13px; border-radius:7px; cursor:pointer; }
-  #backBtn:hover{ border-color:var(--teal); color:var(--teal); }
-  #backBtn.show{ display:flex; }
-  #logoutBtn{ position:absolute; top:18px; right:340px; z-index:25; display:none;
-    align-items:center; gap:6px; background:var(--panel); border:1px solid var(--border);
-    color:var(--text); font-size:12.5px; padding:8px 13px; border-radius:7px; cursor:pointer; }
-  #logoutBtn.show{ display:flex; }
-  #logoutBtn:hover{ border-color:var(--danger); color:var(--danger); }
-
-  .screen{ position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-    flex-direction:column; gap:30px; }
-  .screen.active{ display:flex; }
-
-  /* ---- role / portal cards (shared style) ---- */
-  .heading{ text-align:center; }
-  .heading h1{ font-size:26px; margin:0 0 8px 0; }
-  .heading h1 span{ color:var(--teal); }
-  .heading p{ color:var(--muted); font-size:13px; margin:0; }
-  .card-row{ display:flex; gap:22px; }
-  .pick-card{ width:250px; padding:26px 22px; background:var(--panel); border:1px solid var(--border);
-    border-radius:12px; cursor:pointer; transition:border-color .2s ease, transform .2s ease; }
-  .pick-card:hover{ border-color:var(--teal); transform:translateY(-3px); }
-  .pick-card .eyebrow{ font-size:10.5px; color:var(--muted); letter-spacing:.09em; text-transform:uppercase; }
-  .pick-card h3{ font-size:19px; margin:8px 0 10px 0; }
-  .pick-card p{ font-size:12.5px; color:var(--muted); line-height:1.5; margin:0; }
-  .pick-card .swatchrow{ display:flex; gap:6px; margin-top:14px; }
-  .pick-card .swatchrow span{ width:16px; height:6px; border-radius:2px; }
-  .pick-card.role-gov{ border-top:3px solid var(--gov); }
-  .pick-card.role-citizen{ border-top:3px solid var(--citizen); }
-
-  /* ---- login form ---- */
-  #citizenLogin .loginBox{ width:320px; background:var(--panel); border:1px solid var(--border);
-    border-radius:12px; padding:26px; }
-  #citizenLogin label{ font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
-  #citizenLogin input{ width:100%; margin:6px 0 16px 0; padding:9px 11px; background:var(--panel-2);
-    border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:13px; }
-  #citizenLogin button{ width:100%; padding:10px; background:var(--teal); border:none; border-radius:7px;
-    color:#06201d; font-weight:700; font-size:13px; cursor:pointer; }
-  #citizenLogin button:hover{ opacity:0.9; }
-  #citizenLogin .demoBox{ margin-top:16px; padding:12px 13px; background:var(--panel-2); border:1px solid var(--border-soft);
-    border-radius:8px; font-size:11px; color:var(--muted); line-height:1.7; }
-  #citizenLogin .demoBox b{ color:var(--text); }
-  #loginError{ color:var(--danger); font-size:11.5px; margin-top:-8px; margin-bottom:10px; display:none; }
-
-  /* ---- citizen properties list ---- */
-  #citizenProps .propsWrap{ width:640px; max-height:70vh; overflow-y:auto; }
-  #citizenProps .propsHead{ text-align:center; margin-bottom:20px; }
-  .propCard{ display:flex; justify-content:space-between; align-items:center; gap:14px;
-    background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px; cursor:pointer; }
-  .propCard:hover{ border-color:var(--citizen); }
-  .propCard .ulpinMini{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--citizen); word-break:break-all; }
-  .propCard .metaMini{ font-size:11px; color:var(--muted); margin-top:4px; }
-  .propCard .arrow{ color:var(--muted); font-size:16px; }
-
-  /* ---- locality 2D views ---- */
-  .locality2d{ position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-    transition:opacity .5s ease, transform .6s ease; }
-  .locality2d.active{ display:flex; }
-  .locality2d.fading{ opacity:0; transform:scale(1.15); pointer-events:none; }
-  .locality2d .hint{ position:absolute; bottom:26px; left:0; right:0; text-align:center; color:var(--muted); font-size:12.5px; }
-  .locality2d .hint b{ color:var(--teal); font-weight:600; }
-  .entity{ cursor:pointer; transition:opacity .2s ease; }
-  .entity:hover{ opacity:0.82; }
-  .elabel{ font:600 9.5px 'IBM Plex Mono',monospace; fill:var(--text); pointer-events:none; }
-  .elabel-sub{ font:500 8.5px 'IBM Plex Mono',monospace; fill:var(--muted); pointer-events:none; }
-  .boundary{ fill:none; stroke:var(--border); stroke-dasharray:5 4; stroke-width:1; }
-
-  /* ---- 3D view ---- */
-  #view3d{ position:absolute; inset:0; opacity:0; pointer-events:none; transition:opacity .6s ease; }
-  #view3d.active{ opacity:1; pointer-events:auto; }
-  #canvasHolder{ position:absolute; inset:0; }
-  #labelLayer{ position:absolute; inset:0; pointer-events:none; }
-  .floor-tag{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text);
-    background:rgba(18,24,38,0.88); border:1px solid var(--border); border-radius:4px; padding:2px 7px;
-    white-space:nowrap; transform:translate(-110%,-50%); }
-  #legend{ position:absolute; bottom:20px; left:22px; z-index:20; display:none; flex-direction:column;
-    gap:8px; background:var(--panel); border:1px solid var(--border); border-radius:9px; padding:12px 14px; font-size:12px; }
-  #legend.show{ display:flex; }
-  #legend .row{ display:flex; align-items:center; gap:8px; color:var(--muted); }
-  #legend .swatch{ width:11px; height:11px; border-radius:2px; }
-
-  /* ---- detail panel ---- */
-  #unitListPanel{ position:absolute; top:0; left:0; bottom:0; z-index:29; width:270px; background:var(--panel);
-    border-right:1px solid var(--border); padding:78px 0 16px 0; transform:translateX(-100%);
-    transition:transform .35s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column; }
-  #unitListPanel.open{ transform:translateX(0); }
-  #unitListPanel .ulpHeader{ padding:0 18px 12px 18px; border-bottom:1px solid var(--border-soft); margin-bottom:6px; }
-  #unitListPanel .ulpTitle{ font-size:14.5px; font-weight:700; }
-  #unitListPanel .ulpSub{ font-size:11px; color:var(--muted); margin-top:3px; }
-  #unitListBody{ overflow-y:auto; padding:6px 10px; flex:1; }
-  .unitRow{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 10px;
-    border-radius:7px; cursor:pointer; margin-bottom:4px; border:1px solid transparent; }
-  .unitRow:hover{ background:var(--panel-2); border-color:var(--border); }
-  .unitRow.rowSelected{ background:rgba(56,212,196,0.10); border-color:var(--teal-dim); }
-  .unitRow .ulpinTiny{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--text); word-break:break-all; line-height:1.4; }
-  .unitRow .tinyBadge{ flex-shrink:0; font-size:9.5px; font-weight:600; padding:2px 6px; border-radius:4px; white-space:nowrap; }
-  .unitRow .tinyBadge.residential{ background:rgba(90,130,220,0.16); color:#8fb0f5; }
-  .unitRow .tinyBadge.parking{ background:rgba(234,166,74,0.16); color:var(--amber); }
-  .unitRow .tinyBadge.house{ background:rgba(95,174,114,0.16); color:var(--green); }
-  .unitRow .tinyBadge.hutment{ background:rgba(185,138,94,0.16); color:var(--brown); }
-  .unitRow .tinyBadge.airport{ background:rgba(155,127,224,0.16); color:var(--purple); }
-  #panel{ position:absolute; top:0; right:0; bottom:0; z-index:30; width:340px; background:var(--panel);
-    border-left:1px solid var(--border); padding:78px 22px 24px 22px; transform:translateX(100%);
-    transition:transform .35s cubic-bezier(.2,.8,.2,1); overflow-y:auto; }
-  #panel.open{ transform:translateX(0); }
-  #panel .close{ position:absolute; top:18px; right:18px; width:28px; height:28px; border-radius:6px;
-    background:var(--panel-2); border:1px solid var(--border); color:var(--muted); cursor:pointer;
-    display:flex; align-items:center; justify-content:center; font-size:14px; }
-  #panel .close:hover{ color:var(--text); border-color:var(--teal); }
-  #panel .eyebrow{ font-size:10.5px; color:var(--muted); letter-spacing:.09em; text-transform:uppercase; margin-bottom:6px; }
-  #panel .ulpin{ font-family:'IBM Plex Mono',monospace; font-size:13.5px; font-weight:600; color:var(--teal);
-    line-height:1.55; word-break:break-all; background:rgba(56,212,196,0.08); border:1px solid var(--teal-dim);
-    border-radius:7px; padding:11px 12px; margin-bottom:18px; }
-  #panel .ulpin.warnbox{ color:var(--danger); background:rgba(225,91,91,0.08); border-color:var(--danger-dim); }
-  #panel .field{ margin-bottom:14px; }
-  #panel .field .k{ font-size:10.5px; color:var(--muted); letter-spacing:.05em; text-transform:uppercase; margin-bottom:4px; }
-  #panel .field .v{ font-size:14.5px; font-weight:500; }
-  #panel .field .v.mono{ font-family:'IBM Plex Mono',monospace; font-size:13px; }
-  .badge{ display:inline-block; font-size:11px; font-weight:600; letter-spacing:.02em; padding:3px 9px; border-radius:5px; }
-  .badge.residential{ background:rgba(90,130,220,0.16); color:#8fb0f5; border:1px solid rgba(90,130,220,0.35); }
-  .badge.parking{ background:rgba(234,166,74,0.16); color:var(--amber); border:1px solid var(--amber-dim); }
-  .badge.house{ background:rgba(95,174,114,0.16); color:var(--green); border:1px solid var(--green-dim); }
-  .badge.hutment{ background:rgba(185,138,94,0.16); color:var(--brown); border:1px solid var(--brown-dim); }
-  .badge.airport{ background:rgba(155,127,224,0.16); color:var(--purple); border:1px solid var(--purple-dim); }
-  .badge.corridor{ background:rgba(56,212,196,0.16); color:var(--teal); border:1px solid var(--teal-dim); }
-  .badge.agri{ background:rgba(156,163,90,0.16); color:var(--olive); border:1px solid var(--olive-dim); }
-  .badge.unknown{ background:rgba(225,91,91,0.16); color:var(--danger); border:1px solid var(--danger-dim); }
-  #panel .zbar{ height:6px; border-radius:3px; background:var(--border-soft); position:relative; margin-top:8px; overflow:hidden; }
-  #panel .zbar .fill{ position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,var(--teal-dim),var(--teal)); border-radius:3px; }
-  #panel .divider{ height:1px; background:var(--border-soft); margin:18px 0; }
-  #panel .note{ font-size:11.5px; color:var(--muted); line-height:1.6; }
-
-  #ownerToggle{ display:flex; align-items:center; justify-content:space-between; cursor:pointer;
-    padding:10px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:7px; font-size:11.5px; color:var(--amber); }
-  #ownerToggle:hover{ border-color:var(--amber); }
-  #ownerDetailsBody{ display:none; margin-top:10px; padding:12px 13px; background:rgba(234,166,74,0.06);
-    border:1px solid var(--amber-dim); border-radius:8px; }
-  #ownerDetailsBody.open{ display:block; }
-  #ownerDetailsBody .row{ display:flex; justify-content:space-between; font-size:12.5px; padding:4px 0; }
-  #ownerDetailsBody .row span:first-child{ color:var(--muted); }
-  #ownerDetailsBody .row span:last-child{ font-family:'IBM Plex Mono',monospace; }
-
-  ::-webkit-scrollbar{ width:8px; }
-  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
-</style>
+<link rel="stylesheet" href="assets/css/app.css">
 </head>
 <body>
 <div id="app">
 
-  <div id="topbar">
-    <div>
-      <div class="title">3D <span>ULPIN</span></div>
-      <div class="subtitle" id="topSubtitle">Select a portal to begin</div>
-    </div>
-    <div id="statusLine" class="mono"><span class="dot"></span>Idle</div>
+  <!-- ============ 3D VIEWPORT (always mounted, screens float above it) ============ -->
+  <div id="viewport">
+    <div id="canvasHolder"></div>
+    <div id="labelLayer"></div>
+    <div id="scrim"></div>
+    <div id="hoverTip"></div>
   </div>
-  <button id="backBtn">← Back</button>
-  <button id="logoutBtn">Log out</button>
 
-  <!-- ===== ROLE SELECT ===== -->
-  <div class="screen active" id="roleSelect">
-    <div class="heading">
-      <h1>Choose a <span>portal</span></h1>
-      <p>Same underlying spatial data, two very different levels of access.</p>
-    </div>
-    <div class="card-row">
-      <div class="pick-card role-gov" id="pickGov">
-        <div class="eyebrow">Full access</div>
-        <h3>Government Portal</h3>
-        <p>Revenue department view — every parcel, every unit, every owner record, across all three city tiers.</p>
-        <div class="swatchrow"><span style="background:#38d4c4"></span><span style="background:#eaa64a"></span><span style="background:#9b7fe0"></span></div>
-      </div>
-      <div class="pick-card role-citizen" id="pickCitizen">
-        <div class="eyebrow">Restricted access</div>
-        <h3>Citizen Portal</h3>
-        <p>Log in as a property owner and see only your own flats, in 3D — nothing more.</p>
-        <div class="swatchrow"><span style="background:#8fb0f5"></span><span style="background:#5fae72"></span></div>
+  <!-- ============ TOP BAR ============ -->
+  <header id="topbar">
+    <div class="brandRow">
+      <button id="backBtn" title="Back (Esc)"><span>‹</span></button>
+      <div class="brand">
+        <div class="brandMark">3D<span>ULPIN</span></div>
+        <div class="crumb" id="crumb">Vertical Property Mapping</div>
       </div>
     </div>
-  </div>
-
-  <!-- ===== GOV: TIER LANDING ===== -->
-  <div class="screen" id="govLanding">
-    <div class="heading">
-      <h1>Choose a locality <span>tier</span></h1>
-      <p>Each tier demonstrates the 3D ULPIN scheme operating at a different urban density.</p>
+    <div class="topRight">
+      <div id="statusPill"><i class="dot"></i><span id="statusText">Ready</span></div>
+      <button id="logoutBtn" class="ghostBtn" hidden>Log out</button>
     </div>
-    <div class="card-row">
-      <div class="pick-card" data-tier="tier1">
-        <div class="eyebrow">Tier 1 City</div><h3>Dense vertical core</h3>
-        <p>4 towers, two elevated metro corridors, and an airport.</p>
-        <div class="swatchrow"><span style="background:#3f5c8a"></span><span style="background:#38d4c4"></span><span style="background:#9b7fe0"></span></div>
+  </header>
+
+  <!-- ============ VIEWER HUD ============ -->
+  <div id="hud" hidden>
+    <div class="hudGroup">
+      <button class="hudBtn" id="btnPlan" title="Top-down plan view">
+        <svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 10h14M10 3v14"/></svg><span>Plan</span>
+      </button>
+      <button class="hudBtn" id="btnOrbit" title="Reset the orbit camera">
+        <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6"/><ellipse cx="10" cy="10" rx="9" ry="3.5"/></svg><span>Orbit</span>
+      </button>
+    </div>
+    <div class="hudGroup">
+      <button class="hudBtn" id="btnXray" title="Show the volumetric parcels inside the shell">
+        <svg viewBox="0 0 20 20"><rect x="4" y="4" width="12" height="12" rx="1.5"/><path d="M4 12h12M10 4v12"/></svg><span>Volumes</span>
+      </button>
+      <div class="hudSlider" id="explodeWrap" title="Separate the floors vertically">
+        <label>Explode</label>
+        <input type="range" id="explode" min="0" max="100" value="0">
       </div>
-      <div class="pick-card" data-tier="tier2">
-        <div class="eyebrow">Tier 2 City</div><h3>Low-rise mixed</h3>
-        <p>Mid-rise towers surrounded by independent bungalows.</p>
-        <div class="swatchrow"><span style="background:#3f5c8a"></span><span style="background:#5fae72"></span></div>
+      <button class="hudBtn" id="btnLabels" class="on" title="Toggle floor labels">
+        <svg viewBox="0 0 20 20"><path d="M3 6h14M3 10h9M3 14h11"/></svg><span>Labels</span>
+      </button>
+    </div>
+    <div class="hudGroup">
+      <button class="hudBtn accent" id="btnValidate" title="Re-run the stage-5 topology check">
+        <svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg><span>Validate topology</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ LEFT: STRUCTURE UNIT LIST (government portal) ============ -->
+  <aside id="unitList" hidden>
+    <div class="ulHead">
+      <div class="ulTitle" id="ulTitle">Structure</div>
+      <div class="ulSub" id="ulSub">—</div>
+    </div>
+    <div class="ulFilter">
+      <input id="ulSearch" type="text" placeholder="Filter units, owners, ULPIN…">
+    </div>
+    <div class="ulBody" id="ulBody"></div>
+    <div class="ulFoot" id="ulFoot">—</div>
+  </aside>
+
+  <!-- ============ RIGHT: RECORD PANEL ============ -->
+  <aside id="record" hidden>
+    <button class="closeBtn" id="recordClose">✕</button>
+    <div class="recHead">
+      <div class="eyebrow" id="recEyebrow">Generated 3D ULPIN</div>
+      <div class="ulpinBox mono" id="recUlpin">—</div>
+      <div class="segRow" id="recSegments"></div>
+    </div>
+    <nav class="tabs" id="recTabs">
+      <button data-tab="identity" class="on">Identity</button>
+      <button data-tab="geometry">Geometry</button>
+      <button data-tab="owner">Owner</button>
+    </nav>
+    <div class="tabPane on" data-pane="identity" id="paneIdentity"></div>
+    <div class="tabPane" data-pane="geometry" id="paneGeometry"></div>
+    <div class="tabPane" data-pane="owner" id="paneOwner"></div>
+  </aside>
+
+  <!-- ============ LEFT STACK: derivation note + legend ============ -->
+  <div id="leftStack">
+    <div id="siteNote" hidden></div>
+    <div id="legend" hidden></div>
+  </div>
+
+  <!-- ============ TOASTS ============ -->
+  <div id="toasts"></div>
+
+  <!-- ============ SCREENS ============ -->
+
+  <!-- HUB -->
+  <section class="screen scroll active" id="hub">
+    <div class="wrap">
+      <div class="hero">
+        <div class="kicker">Smart India Hackathon · Smart Automation</div>
+        <h1>3D <em>ULPIN</em> &amp; Vertical Property Mapping</h1>
+        <p class="sub">A volumetric cadastre: unique spatial identities for surface parcels, every floor and unit above
+          them, and the infrastructure that crosses between. One dataset, four prototype stages, one app.</p>
+        <div class="idStrip mono">
+          <span class="s1">KA1234567890AB</span><span class="s2">-B01</span><span class="s3">-F07</span><span class="s4">-U12</span><span class="s5">-Z(21.0-24.0m)</span>
+        </div>
+        <div class="idStripKey">
+          <span><i style="background:var(--text)"></i>Base ULPIN — existing 14-char surface code</span>
+          <span><i style="background:var(--teal)"></i>Structure</span>
+          <span><i style="background:var(--amber)"></i>Floor</span>
+          <span><i style="background:var(--violet)"></i>Unit</span>
+          <span><i style="background:var(--green)"></i>Elevation band</span>
+        </div>
       </div>
-      <div class="pick-card" data-tier="tier3">
-        <div class="eyebrow">Tier 3 City</div><h3>Rural &amp; agricultural</h3>
-        <p>Farmland, hutments, and one unresolved ownership record.</p>
-        <div class="swatchrow"><span style="background:#9ca35a"></span><span style="background:#b98a5e"></span><span style="background:#e15b5b"></span></div>
+
+      <div class="grid3">
+        <article class="card lift" data-go="p1">
+          <div class="cardTop"><span class="tag t-teal">Prototype 1</span></div>
+          <h3>Single Building</h3>
+          <p>One parcel, one structure — 5 floors × 2 units over a basement parking level, with a commercial unit at
+            grade. The plan view lifts into a fully modelled tower and the topology check runs live.</p>
+          <div class="chips"><span>Plan → 3D</span><span>DEM / DSM</span><span>Stage 5 check</span></div>
+          <div class="cardGo">Open <span>→</span></div>
+        </article>
+        <article class="card lift" data-go="p2">
+          <div class="cardTop"><span class="tag t-amber">Prototype 2</span></div>
+          <h3>Multi-Tier Locality</h3>
+          <p>Tier 1, 2 and 3 densities as real 3D localities: towers, elevated metro viaducts with a running train, an
+            airport, bungalows, hutments, farmland, and one unresolved-ownership parcel.</p>
+          <div class="chips"><span>Air-rights</span><span>Corridor IDs</span><span>Edge cases</span></div>
+          <div class="cardGo">Open <span>→</span></div>
+        </article>
+        <article class="card lift" data-go="p34">
+          <div class="cardTop"><span class="tag t-violet">Prototype 3 + 4</span></div>
+          <h3>Digital Twin Portals</h3>
+          <p>Government and Citizen portals over identical data. The government sees every unit and owner record; a
+            citizen sees only their own volume and nothing else in the building.</p>
+          <div class="chips"><span>Role-based access</span><span>Unit register</span><span>Owner records</span></div>
+          <div class="cardGo">Open <span>→</span></div>
+        </article>
+      </div>
+
+      <div class="grid3 tight">
+        <article class="card mini" data-go="docs" data-anchor="secScheme">
+          <h4>Scheme &amp; algorithm</h4>
+          <p>Problem statement, ID anatomy, why the Z-range is non-negotiable, the 9-step pipeline.</p>
+        </article>
+        <article class="card mini" data-go="docs" data-anchor="secValidator">
+          <h4>Topology validator</h4>
+          <p>Interactive: overlap the footprints, overlap the bands, watch the rule decide.</p>
+        </article>
+        <article class="card mini" data-go="docs" data-anchor="secEvolution">
+          <h4>Prototype log &amp; limits</h4>
+          <p>What each of the four builds added, and every simplification stated openly.</p>
+        </article>
+      </div>
+
+      <footer class="hubFoot">
+        <div><b>Everything traces to one Base ULPIN family.</b> Tower units, bungalows, hutments, a metro deck,
+        farmland, even the barren plot with no verified owner — all derive from the same 14-character surface code, so
+        nothing in this build is a disconnected mock-up.</div>
+        <div class="keys mono">Drag orbit · Scroll zoom · <b>Esc</b> back · <b>X</b> volumes · <b>P</b> plan</div>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ROLE SELECT -->
+  <section class="screen center" id="roleSelect">
+    <div class="pickWrap">
+      <div class="pickHead">
+        <h2>Choose a <em>portal</em></h2>
+        <p>The same spatial records, two very different levels of access.</p>
+      </div>
+      <div class="pickRow">
+        <article class="card lift pick gov" id="pickGov">
+          <div class="cardTop"><span class="tag t-teal">Full access</span></div>
+          <h3>Government Portal</h3>
+          <p>Revenue department view — every parcel, every unit, the complete owner register, across all three tiers.</p>
+          <div class="chips"><span>Unit register</span><span>Restricted PII</span><span>All tiers</span></div>
+          <div class="cardGo">Enter <span>→</span></div>
+        </article>
+        <article class="card lift pick cit" id="pickCitizen">
+          <div class="cardTop"><span class="tag t-violet">Restricted access</span></div>
+          <h3>Citizen Portal</h3>
+          <p>Log in as an owner and see only the volumes you hold. Every other unit is a blank grey block.</p>
+          <div class="chips"><span>My properties</span><span>Masked neighbours</span><span>No PII</span></div>
+          <div class="cardGo">Log in <span>→</span></div>
+        </article>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ===== GOV: TIER 2D LOCALITY VIEWS ===== -->
-  <div class="locality2d" id="tier1-2d"><svg id="svg-tier1" width="800" height="600" viewBox="0 0 800 600"></svg>
-    <div class="hint">Click a <b>building</b> to enter 3D, or a <b>metro line</b> for the elevated corridor →</div></div>
-  <div class="locality2d" id="tier2-2d"><svg id="svg-tier2" width="800" height="600" viewBox="0 0 800 600"></svg>
-    <div class="hint">Click any <b>tower</b> or <b>bungalow</b> to view its 3D structure →</div></div>
-  <div class="locality2d" id="tier3-2d"><svg id="svg-tier3" width="800" height="600" viewBox="0 0 800 600"></svg>
-    <div class="hint">Click a <b>land parcel</b> or <b>hutment</b> — note the unresolved-ownership plot →</div></div>
-
-  <!-- ===== CITIZEN: LOGIN ===== -->
-  <div class="screen" id="citizenLogin">
-    <div class="heading"><h1>Citizen <span>login</span></h1><p>Prototype login — not real authentication.</p></div>
-    <div class="loginBox">
-      <label>Username</label>
-      <input id="loginUser" type="text" placeholder="e.g. rohan" />
-      <label>Password</label>
-      <input id="loginPass" type="password" placeholder="demo123" />
-      <div id="loginError">Incorrect username or password. Try one of the demo accounts below.</div>
-      <button id="loginBtn">Log in</button>
-      <div class="demoBox">
-        Demo accounts (for judges to try live):<br>
-        <b>rohan</b> / demo123 &nbsp;·&nbsp; <b>ananya</b> / demo123 &nbsp;·&nbsp; <b>vikram</b> / demo123
+  <!-- TIER SELECT -->
+  <section class="screen center" id="tierSelect">
+    <div class="pickWrap">
+      <div class="pickHead">
+        <h2>Choose a locality <em>tier</em></h2>
+        <p>Each tier puts the same ID scheme under a different urban density.</p>
+      </div>
+      <div class="pickRow three">
+        <article class="card lift pick" data-tier="tier1">
+          <div class="cardTop"><span class="tag t-teal">Tier 1</span></div>
+          <h3>Dense vertical core</h3>
+          <p>Four towers, two elevated metro corridors and an airport parcel on one locality boundary.</p>
+          <div class="chips"><span>4 towers</span><span>2 viaducts</span><span>Airport</span></div>
+          <div class="cardGo">Enter <span>→</span></div>
+        </article>
+        <article class="card lift pick" data-tier="tier2">
+          <div class="cardTop"><span class="tag t-amber">Tier 2</span></div>
+          <h3>Low-rise mixed</h3>
+          <p>Two mid-rise towers surrounded by independent bungalows on their own plots.</p>
+          <div class="chips"><span>2 towers</span><span>5 bungalows</span></div>
+          <div class="cardGo">Enter <span>→</span></div>
+        </article>
+        <article class="card lift pick" data-tier="tier3">
+          <div class="cardTop"><span class="tag t-green">Tier 3</span></div>
+          <h3>Rural &amp; agricultural</h3>
+          <p>Crop parcels, hutments, and one barren plot whose ownership record is still unresolved.</p>
+          <div class="chips"><span>Farmland</span><span>Hutments</span><span>Unverified plot</span></div>
+          <div class="cardGo">Enter <span>→</span></div>
+        </article>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ===== CITIZEN: PROPERTIES LIST ===== -->
-  <div class="screen" id="citizenProps">
-    <div class="propsWrap">
-      <div class="propsHead">
-        <h1 style="font-size:22px;margin:0;">My <span style="color:var(--citizen)">Properties</span></h1>
-        <p style="color:var(--muted);font-size:12.5px;margin:6px 0 0 0;" id="propsCount">—</p>
+  <!-- CITIZEN LOGIN -->
+  <section class="screen center" id="citizenLogin">
+    <div class="loginWrap">
+      <div class="pickHead">
+        <h2>Citizen <em>login</em></h2>
+        <p>Prototype gate — not real authentication.</p>
       </div>
-      <div id="propsList"></div>
+      <form class="loginCard" id="loginForm" autocomplete="off">
+        <label for="loginUser">Username</label>
+        <input id="loginUser" type="text" placeholder="rohan" autocomplete="off">
+        <label for="loginPass">Password</label>
+        <input id="loginPass" type="password" placeholder="demo123" autocomplete="off">
+        <div class="formErr" id="loginError">Incorrect username or password.</div>
+        <button class="primaryBtn" type="submit">Log in</button>
+        <div class="demoAccounts">
+          <div class="daHead">Demo accounts</div>
+          <button type="button" class="daRow" data-user="rohan"><b>rohan</b><span>demo123</span></button>
+          <button type="button" class="daRow" data-user="ananya"><b>ananya</b><span>demo123</span></button>
+          <button type="button" class="daRow" data-user="vikram"><b>vikram</b><span>demo123</span></button>
+        </div>
+      </form>
     </div>
-  </div>
+  </section>
 
-  <!-- ===== 3D VIEW ===== -->
-  <div id="view3d"><div id="canvasHolder"></div><div id="labelLayer"></div></div>
-  <div id="legend">
-    <div class="row"><span class="swatch" style="background:#4d76c9"></span>Owned / visible unit</div>
-    <div class="row"><span class="swatch" style="background:#5a6478"></span>Not owned (context only)</div>
-  </div>
+  <!-- CITIZEN PROPERTIES -->
+  <section class="screen scroll" id="citizenProps">
+    <div class="wrap narrow">
+      <div class="pickHead left">
+        <h2>My <em>properties</em></h2>
+        <p id="propsCount">—</p>
+      </div>
+      <div id="propsList" class="propsList"></div>
+    </div>
+  </section>
 
-  <!-- ===== DETAIL PANEL ===== -->
-  <!-- ===== GOV: UNIT LIST SIDE PANEL ===== -->
-  <div id="unitListPanel">
-    <div class="ulpHeader">
-      <div class="ulpTitle" id="ulpTitle">Structure</div>
-      <div class="ulpSub" id="ulpSub">—</div>
-    </div>
-    <div id="unitListBody"></div>
-  </div>
+  <!-- DOCS -->
+  <section class="screen scroll" id="docs"><div class="wrap" id="docsWrap"></div></section>
 
-  <div id="panel">
-    <div class="close" id="panelClose">✕</div>
-    <div class="eyebrow" id="panelEyebrow">Generated Spatial ID</div>
-    <div class="ulpin mono" id="panelUlpin">—</div>
-    <div class="field"><div class="k" id="panelOwnerLabel">Owner</div><div class="v" id="panelOwner">—</div></div>
-    <div class="field"><div class="k">Type</div><div class="v"><span class="badge" id="panelBadge">—</span></div></div>
-    <div class="field" id="panelLocationField"><div class="k">Location</div><div class="v mono" id="panelLocation">—</div></div>
-    <div class="field" id="panelZField">
-      <div class="k">Elevation (Z-range)</div>
-      <div class="v mono" id="panelZ">—</div>
-      <div class="zbar"><div class="fill" id="panelZFill"></div></div>
-    </div>
-    <div id="ownerToggle" style="display:none;">
-      <span>▸ Owner Details — Restricted / Revenue Dept access</span>
-    </div>
-    <div id="ownerDetailsBody">
-      <div class="row"><span>Phone</span><span id="odPhone">—</span></div>
-      <div class="row"><span>Age</span><span id="odAge">—</span></div>
-      <div class="row"><span>Gender</span><span id="odGender">—</span></div>
-    </div>
-    <div class="divider"></div>
-    <div class="note" id="panelNote">—</div>
-  </div>
+  <!-- LOADER -->
+  <div id="loader"><div class="ring"></div><div class="loadMsg">Building the digital twin…</div></div>
 
 </div>
 
@@ -333,785 +285,6 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
 } }
 </script>
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-
-/* =========================================================================
-   1. RNG + hashing — deterministic "randomness" for layouts and dummy PII
-   ========================================================================= */
-function mulberry32(seed){
-  return function(){
-    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h = (Math.imul(31,h)+s.charCodeAt(i))|0; } return h>>>0; }
-
-/* =========================================================================
-   2. ID GENERATION
-   ========================================================================= */
-const pad = (n, w=2) => String(n).padStart(w, '0');
-function makeBaseULPIN(prefix, n){ return `${prefix}12345678${String(n).padStart(4,'0')}`; }
-function generateUnitULPIN(base, structureID, floorNum, unitNum, zBottom, zTop){
-  return `${base}-${structureID}-F${pad(floorNum)}-U${pad(unitNum)}-Z(${zBottom.toFixed(1)}-${zTop.toFixed(1)}m)`;
-}
-function generateCorridorULPIN(base, corridorCode, zBottom, zTop){
-  return `${base}-COR-${corridorCode}-Z(${zBottom.toFixed(1)}-${zTop.toFixed(1)}m)`;
-}
-function generateSurfaceULPIN(base, structureID){ return `${base}-${structureID}`; }
-
-const OWNER_POOL = [
-  'Rohan Mehta','Ananya Sharma','Vikram Rao','Priya Nair','Arjun Kapoor',
-  'Sneha Iyer','Karan Malhotra','Isha Bhatt','Aditya Verma','Meera Joshi',
-  'Suresh Patil','Farah Sheikh','Devendra Singh','Lakshmi Menon'
-];
-let ownerCursor = 0;
-const nextOwner = () => OWNER_POOL[(ownerCursor++) % OWNER_POOL.length];
-
-/** Deterministic dummy PII per owner name — same owner always shows the same details. */
-function ownerDetailsFor(name){
-  const rng = mulberry32(hashStr(name));
-  const digits = () => Array.from({length:10}, () => Math.floor(rng()*10)).join('');
-  const d = digits();
-  const age = 24 + Math.floor(rng()*44);
-  const gender = rng() < 0.52 ? 'Male' : 'Female';
-  return { phone: `+91 ${d.slice(0,5)} ${d.slice(5,10)}`, age, gender };
-}
-
-const DEMO_ACCOUNTS = [
-  { username:'rohan',  password:'demo123', owner:'Rohan Mehta' },
-  { username:'ananya', password:'demo123', owner:'Ananya Sharma' },
-  { username:'vikram', password:'demo123', owner:'Vikram Rao' },
-];
-
-function buildStructureUnits(base, structureID, floors, unitsPerFloor, floorHeight, defaultType, overrides = {}){
-  const units = [];
-  for (let f = 1; f <= floors; f++){
-    const zBottom = (f - 1) * floorHeight, zTop = f * floorHeight;
-    for (let u = 1; u <= unitsPerFloor; u++){
-      const ov = overrides[`${f}-${u}`] || {};
-      units.push({
-        floorNum: f, unitNum: u, zBottom, zTop,
-        side: unitsPerFloor === 1 ? 'center' : (u === 1 ? 'left' : 'right'),
-        unitType: ov.unitType || defaultType,
-        owner: ov.owner || nextOwner(),
-        ulpin: generateUnitULPIN(base, structureID, f, u, zBottom, zTop)
-      });
-    }
-  }
-  return units;
-}
-function runTopologyCheck(units, floors, unitsPerFloor){
-  if (unitsPerFloor < 2) return { conflicts:0, unitsChecked:units.length, floorsChecked:floors };
-  const UNIT_W=2, GAP=0.2;
-  const footprintOf = u => { const half=UNIT_W+GAP/2; return u.side==='left' ? {xMin:-half,xMax:-GAP/2} : {xMin:GAP/2,xMax:half}; };
-  const overlaps = (a,b) => a.xMin<b.xMax && b.xMin<a.xMax;
-  let conflicts=0;
-  for (let f=1; f<=floors; f++){
-    const onFloor = units.filter(u=>u.floorNum===f);
-    for (let i=0;i<onFloor.length;i++) for (let j=i+1;j<onFloor.length;j++)
-      if (overlaps(footprintOf(onFloor[i]), footprintOf(onFloor[j]))) conflicts++;
-  }
-  return { conflicts, unitsChecked:units.length, floorsChecked:floors };
-}
-
-/* =========================================================================
-   3. TIER DATA
-   ========================================================================= */
-function randomQuad(rng, cx, cy, rx, ry){
-  return [-135,-45,45,135].map(a => {
-    const rad = a*Math.PI/180 + (rng()-0.5)*0.5;
-    return { x: cx + Math.cos(rad)*rx*(0.75+rng()*0.35), y: cy + Math.sin(rad)*ry*(0.75+rng()*0.35) };
-  });
-}
-const ROOF_TYPES = ['setback','narrow','tank','garden'];
-
-function buildTier1(){
-  const rng = mulberry32(42);
-  const quad = randomQuad(rng, 400, 300, 320, 230);
-  const buildings = [
-    { pos:[230,180], floors:5, structureID:'B01' },
-    { pos:[530,190], floors:7, structureID:'B02' },
-    { pos:[250,400], floors:4, structureID:'B03' },
-    { pos:[540,410], floors:6, structureID:'B04' },
-  ].map((b,i) => {
-    const base = makeBaseULPIN('MH', i+1);
-    const units = buildStructureUnits(base, b.structureID, b.floors, 2, 3, 'Residential', {
-      '1-1': { unitType:'Parking', owner:'— (Common / Society-owned) —' }
-    });
-    return { kind:'building', buildingKind:'tower', roofType:ROOF_TYPES[i%4], base, structureID:b.structureID,
-      floors:b.floors, unitsPerFloor:2, floorHeight:3, units, pos:b.pos, w:70, h:70,
-      label:`STRUCTURE ${b.structureID}`, sub:`${b.floors} floors` };
-  });
-  const airportBase = makeBaseULPIN('MH', 90);
-  const airportUnits = buildStructureUnits(airportBase, 'APT01', 1, 1, 6, 'Airport Terminal');
-  const airport = { kind:'building', buildingKind:'airport', base:airportBase, structureID:'APT01',
-    floors:1, unitsPerFloor:1, floorHeight:6, units:airportUnits, pos:[670,300], w:110, h:70,
-    label:'AIRPORT TERMINAL', sub:'Single structure' };
-  const corridors = [
-    { code:'M01', structureID:'M01', path:[[140,260],[420,240],[700,270]] },
-    { code:'M02', structureID:'M02', path:[[180,470],[400,340],[660,180]] },
-  ].map((c,i) => {
-    const base = makeBaseULPIN('MH', 50+i), zBottom=8, zTop=11;
-    return { kind:'corridor', base, structureID:c.structureID, path:c.path, zBottom, zTop,
-      ulpin: generateCorridorULPIN(base, c.code, zBottom, zTop), label:`ELEVATED CORRIDOR ${c.code}` };
-  });
-  const roads = [ [[60,260],[750,260]], [[400,60],[400,540]], [[60,470],[750,470]] ];
-  const gardens = [ { x:60, y:60, w:120, h:80 }, { x:610, y:440, w:140, h:100 } ];
-  return { name:'Tier 1 — Dense Vertical Core', quad, buildings:[...buildings, airport], corridors, roads, gardens };
-}
-
-function buildTier2(){
-  const rng = mulberry32(7);
-  const quad = randomQuad(rng, 400, 300, 300, 220);
-  const towers = [
-    { pos:[300,220], floors:4, structureID:'B01' },
-    { pos:[520,360], floors:3, structureID:'B02' },
-  ].map((b,i) => {
-    const base = makeBaseULPIN('GJ', i+1);
-    const units = buildStructureUnits(base, b.structureID, b.floors, 2, 3, 'Residential');
-    return { kind:'building', buildingKind:'tower', roofType:ROOF_TYPES[i%4], base, structureID:b.structureID,
-      floors:b.floors, unitsPerFloor:2, floorHeight:3, units, pos:b.pos, w:60, h:60,
-      label:`TOWER ${b.structureID}`, sub:`${b.floors} floors` };
-  });
-  const bungalowSpots = [[180,150],[220,420],[420,470],[600,180],[650,420]];
-  const bungalows = bungalowSpots.map((pos,i) => {
-    const base = makeBaseULPIN('GJ', 20+i), floors = 1+(i%2), structureID = `H0${i+1}`;
-    const units = buildStructureUnits(base, structureID, floors, 1, 3, 'Independent House');
-    return { kind:'building', buildingKind:'bungalow', base, structureID, floors, unitsPerFloor:1,
-      floorHeight:3, units, pos, w:36, h:36, label:structureID, sub:'Independent House' };
-  });
-  const roads = [ [[60,300],[750,300]], [[400,60],[400,540]] ];
-  const gardens = [ { x:340, y:60, w:130, h:80 } ];
-  return { name:'Tier 2 — Low-Rise Mixed', quad, buildings:[...towers, ...bungalows], corridors:[], roads, gardens };
-}
-
-function buildTier3(){
-  const rng = mulberry32(99);
-  const quad = randomQuad(rng, 400, 300, 340, 250);
-  const agriSpots = [
-    { poly:[[130,130],[340,110],[320,290],[110,300]], crop:'Sugarcane', area:'4.2 hectares' },
-    { poly:[[420,140],[660,160],[640,320],[430,300]], crop:'Cotton', area:'3.1 hectares' },
-  ];
-  const landParcels = agriSpots.map((a,i) => {
-    const base = makeBaseULPIN('UP', 10+i);
-    return { kind:'land', base, structureID:`L0${i+1}`, poly:a.poly, crop:a.crop, area:a.area,
-      owner:nextOwner(), label:`L0${i+1}`, unresolved:false };
-  });
-  const barrenBase = makeBaseULPIN('UP', 77);
-  landParcels.push({ kind:'land', base:barrenBase, structureID:'L00',
-    poly:[[140,380],[300,360],[320,510],[130,520]], crop:'Barren / Unclassified', area:'1.8 hectares',
-    owner:null, label:'L00', unresolved:true });
-  const hutmentSpots = [[500,420],[560,470],[610,410],[540,510]];
-  const hutments = hutmentSpots.map((pos,i) => {
-    const base = makeBaseULPIN('UP', 40+i), structureID = `HT0${i+1}`;
-    const units = buildStructureUnits(base, structureID, 1, 1, 2.5, 'Hutment');
-    return { kind:'building', buildingKind:'hutment', base, structureID, floors:1, unitsPerFloor:1,
-      floorHeight:2.5, units, pos, w:22, h:22, label:structureID, sub:'Hutment' };
-  });
-  const roads = [ [[60,250],[420,250]] ];
-  return { name:'Tier 3 — Rural & Agricultural', quad, buildings:hutments, landParcels, corridors:[], roads, gardens:[] };
-}
-
-const TIERS = { tier1: buildTier1(), tier2: buildTier2(), tier3: buildTier3() };
-
-function propertiesFor(ownerName){
-  const results = [];
-  Object.entries(TIERS).forEach(([tierKey, tier]) => {
-    tier.buildings.forEach(b => {
-      if (b.buildingKind === 'airport') return;
-      b.units.forEach(u => { if (u.owner === ownerName) results.push({ tierKey, structure:b, unit:u }); });
-    });
-  });
-  return results;
-}
-
-/* =========================================================================
-   4. 2D RENDERING (roads, gardens, boundaries, entities)
-   ========================================================================= */
-const SVGNS = 'http://www.w3.org/2000/svg';
-function svgEl(tag, attrs){ const el = document.createElementNS(SVGNS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); return el; }
-function polyPoints(poly){ return poly.map(p=>p.join(',')).join(' '); }
-const badgeClassFor = (type) => ({ 'Residential':'residential','Parking':'parking','Independent House':'house',
-  'Hutment':'hutment','Airport Terminal':'airport' }[type] || 'residential');
-
-function renderTier2D(tierKey){
-  const tier = TIERS[tierKey];
-  const svg = document.getElementById(`svg-${tierKey}`);
-  if (svg.dataset.built) return;
-  svg.dataset.built = '1';
-  const isTier3 = tierKey === 'tier3';
-
-  // ground tone
-  svg.appendChild(svgEl('rect', { x:0,y:0,width:800,height:600, fill: isTier3 ? '#12140c' : '#0d1017' }));
-
-  // roads (drawn first, under everything)
-  (tier.roads||[]).forEach(r => {
-    svg.appendChild(svgEl('polyline', { points:r.map(p=>p.join(',')).join(' '), fill:'none',
-      stroke:'#232b3d', 'stroke-width':14, 'stroke-linecap':'round' }));
-    svg.appendChild(svgEl('polyline', { points:r.map(p=>p.join(',')).join(' '), fill:'none',
-      stroke:'#3a4358', 'stroke-width':1, 'stroke-dasharray':'6 6' }));
-  });
-
-  // public gardens with simple trees
-  (tier.gardens||[]).forEach(g => {
-    svg.appendChild(svgEl('rect', { x:g.x, y:g.y, width:g.w, height:g.h, rx:8, fill:'#1f3324', stroke:'#3a5a3f', 'stroke-width':1 }));
-    const rng = mulberry32(g.x*7+g.y);
-    for (let i=0;i<7;i++){
-      const tx = g.x+8+rng()*(g.w-16), ty = g.y+8+rng()*(g.h-16);
-      svg.appendChild(svgEl('circle', { cx:tx, cy:ty, r:4+rng()*3, fill:'#4a7a52' }));
-    }
-  });
-
-  svg.appendChild(svgEl('polygon', { class:'boundary', points: polyPoints(tier.quad.map(p=>[p.x,p.y])) }));
-
-  tier.buildings.forEach(b => {
-    const g = svgEl('g', { class:'entity' });
-    const fillColor = b.buildingKind==='hutment' ? '#b98a5e' : b.buildingKind==='airport' ? '#9b7fe0' : b.buildingKind==='bungalow' ? '#5fae72' : '#38d4c4';
-    g.appendChild(svgEl('rect', { x:b.pos[0]-b.w/2, y:b.pos[1]-b.h/2, width:b.w, height:b.h, rx:3,
-      fill:`${fillColor}22`, stroke:fillColor, 'stroke-width':1.6 }));
-    g.appendChild(svgEl('text', { class:'elabel', x:b.pos[0]-b.w/2+6, y:b.pos[1]-b.h/2-8 })); g.lastChild.textContent = b.label;
-    g.appendChild(svgEl('text', { class:'elabel-sub', x:b.pos[0]-b.w/2+6, y:b.pos[1]+b.h/2+16 })); g.lastChild.textContent = b.sub;
-    g.addEventListener('click', () => enterStructure3D(b));
-    svg.appendChild(g);
-  });
-
-  (tier.corridors||[]).forEach(c => {
-    const g = svgEl('g', { class:'entity' });
-    g.appendChild(svgEl('polyline', { points:c.path.map(p=>p.join(',')).join(' '), fill:'none',
-      stroke:'#eaa64a', 'stroke-width':3, 'stroke-linecap':'round' }));
-    const mid = c.path[Math.floor(c.path.length/2)];
-    g.appendChild(svgEl('text', { class:'elabel', x:mid[0]+8, y:mid[1]-10 })); g.lastChild.textContent = c.label;
-    g.addEventListener('click', () => enterCorridor3D(c));
-    svg.appendChild(g);
-  });
-
-  (tier.landParcels||[]).forEach(l => {
-    const g = svgEl('g', { class:'entity' });
-    const fill = l.unresolved ? '#e15b5b1f' : '#9ca35a22', stroke = l.unresolved ? '#e15b5b' : '#9ca35a';
-    const dash = l.unresolved ? { 'stroke-dasharray':'6 4' } : {};
-    g.appendChild(svgEl('polygon', { points:polyPoints(l.poly), fill, stroke, 'stroke-width':1.6, ...dash }));
-    const cx = l.poly.reduce((s,p)=>s+p[0],0)/l.poly.length, cy = l.poly.reduce((s,p)=>s+p[1],0)/l.poly.length;
-    g.appendChild(svgEl('text', { class:'elabel', x:cx-14, y:cy })); g.lastChild.textContent = l.unresolved ? 'UNRESOLVED' : l.label;
-    g.addEventListener('click', () => openLandPanel(l));
-    svg.appendChild(g);
-  });
-}
-
-/* =========================================================================
-   5. SCREEN / NAVIGATION STATE MACHINE
-   ========================================================================= */
-const backBtn = document.getElementById('backBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const legend = document.getElementById('legend');
-const statusLine = document.getElementById('statusLine');
-const topSubtitle = document.getElementById('topSubtitle');
-const view3d = document.getElementById('view3d');
-
-let currentPortal = null;      // 'gov' | 'citizen'
-let currentTierKey = null;
-let loggedInOwner = null;
-let view3DActive = false;
-let return3DTarget = null;     // element id to reveal behind the 3D overlay
-
-function setStatus(kind, text){
-  statusLine.className = kind === 'ok' ? 'mono ok' : 'mono';
-  statusLine.innerHTML = `<span class="dot"></span>${text}`;
-}
-function showScreen(id){
-  document.querySelectorAll('.screen, .locality2d').forEach(el => { el.classList.remove('active'); el.classList.remove('fading'); });
-  document.getElementById(id).classList.add('active');
-}
-
-document.getElementById('pickGov').addEventListener('click', () => {
-  currentPortal = 'gov';
-  showScreen('govLanding');
-  backBtn.classList.add('show');
-  topSubtitle.textContent = 'Government Portal — full access';
-  setStatus('idle','Government Portal');
-});
-document.getElementById('pickCitizen').addEventListener('click', () => {
-  currentPortal = 'citizen';
-  showScreen('citizenLogin');
-  backBtn.classList.add('show');
-  topSubtitle.textContent = 'Citizen Portal — login required';
-  setStatus('idle','Citizen Portal — please log in');
-});
-
-document.querySelectorAll('#govLanding [data-tier]').forEach(card => {
-  card.addEventListener('click', () => {
-    const key = card.dataset.tier;
-    renderTier2D(key);
-    currentTierKey = key;
-    showScreen(`${key}-2d`);
-    topSubtitle.textContent = `Government Portal — ${TIERS[key].name}`;
-    setStatus('idle', `Viewing ${TIERS[key].name}`);
-  });
-});
-
-document.getElementById('loginBtn').addEventListener('click', () => {
-  const u = document.getElementById('loginUser').value.trim().toLowerCase();
-  const p = document.getElementById('loginPass').value;
-  const match = DEMO_ACCOUNTS.find(a => a.username === u && a.password === p);
-  const err = document.getElementById('loginError');
-  if (!match){ err.style.display = 'block'; return; }
-  err.style.display = 'none';
-  loggedInOwner = match.owner;
-  renderCitizenProps();
-  showScreen('citizenProps');
-  logoutBtn.classList.add('show');
-  topSubtitle.textContent = `Citizen Portal — logged in as ${match.owner}`;
-  setStatus('ok', `Logged in as ${match.owner}`);
-});
-
-function renderCitizenProps(){
-  const props = propertiesFor(loggedInOwner);
-  document.getElementById('propsCount').textContent = `${props.length} propert${props.length===1?'y':'ies'} found for ${loggedInOwner}`;
-  const list = document.getElementById('propsList');
-  list.innerHTML = '';
-  props.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'propCard';
-    card.innerHTML = `<div><div class="ulpinMini mono">${p.unit.ulpin}</div>
-      <div class="metaMini">${TIERS[p.tierKey].name} · ${p.structure.label} · ${p.unit.unitType}</div></div>
-      <div class="arrow">→</div>`;
-    card.addEventListener('click', () => enterStructure3D(p.structure, { citizenFilterOwner: loggedInOwner, focusUnit: p.unit, return3D:'citizenProps' }));
-    list.appendChild(card);
-  });
-}
-
-logoutBtn.addEventListener('click', () => {
-  loggedInOwner = null; currentPortal = null;
-  logoutBtn.classList.remove('show'); backBtn.classList.remove('show');
-  showScreen('roleSelect');
-  topSubtitle.textContent = 'Select a portal to begin';
-  setStatus('idle','Idle');
-});
-
-backBtn.addEventListener('click', () => {
-  if (view3DActive){
-    view3d.classList.remove('active'); legend.classList.remove('show'); view3DActive = false;
-    closePanel(); hideUnitListPanel();
-    if (return3DTarget) showScreen(return3DTarget);
-    setStatus('idle', currentPortal === 'gov' ? `Viewing ${TIERS[currentTierKey].name}` : `Logged in as ${loggedInOwner}`);
-    return;
-  }
-  if (currentPortal === 'gov'){
-    if (document.getElementById('govLanding').classList.contains('active')){
-      currentPortal = null; backBtn.classList.remove('show'); showScreen('roleSelect');
-      topSubtitle.textContent = 'Select a portal to begin'; setStatus('idle','Idle');
-    } else {
-      showScreen('govLanding'); topSubtitle.textContent = 'Government Portal — full access'; setStatus('idle','Government Portal');
-    }
-  } else if (currentPortal === 'citizen'){
-    loggedInOwner = null; logoutBtn.classList.remove('show'); backBtn.classList.remove('show');
-    currentPortal = null; showScreen('roleSelect');
-    topSubtitle.textContent = 'Select a portal to begin'; setStatus('idle','Idle');
-  }
-});
-
-/* =========================================================================
-   6. TEXTURES — procedural facades, roads, runway markings
-   ========================================================================= */
-function createWindowTexture(baseColor, repeatX, repeatY, opts={}){
-  const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = baseColor; ctx.fillRect(0,0,128,128);
-  const cols = opts.cols || 6, rows = opts.rows || 6;
-  const cw = 128/cols, rh = 128/rows;
-  const rng = mulberry32(hashStr(baseColor + cols + rows));
-  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++){
-    const lit = rng() < (opts.litRatio ?? 0.32);
-    ctx.fillStyle = lit ? 'rgba(255,222,150,0.92)' : 'rgba(12,17,26,0.88)';
-    ctx.fillRect(c*cw+cw*0.16, r*rh+rh*0.18, cw*0.68, rh*0.56);
-  }
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.repeat.set(repeatX, repeatY);
-  return tex;
-}
-function createGroundTexture(tone){
-  const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 64;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = tone; ctx.fillRect(0,0,64,64);
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
-  for (let i=0;i<64;i+=8){ ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(64,i); ctx.stroke(); }
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(10,10);
-  return tex;
-}
-
-/* =========================================================================
-   7. THREE.JS SETUP
-   ========================================================================= */
-let renderer, labelRenderer, camera, controls, scene, dynamicGroup;
-let raycaster, pointer, sceneReady = false;
-const interactiveMeshes = [];
-let selectedOutline = null;
-let selectedFill = null;
-
-function ensureScene(){
-  if (sceneReady) return;
-  const holder = document.getElementById('canvasHolder');
-  const w = holder.clientWidth, h = holder.clientHeight;
-  scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0e15); scene.fog = new THREE.Fog(0x0a0e15, 22, 50);
-  camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 100);
-  renderer = new THREE.WebGLRenderer({ antialias:true }); renderer.setSize(w,h); renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  holder.appendChild(renderer.domElement);
-  labelRenderer = new CSS2DRenderer(); labelRenderer.setSize(w,h);
-  labelRenderer.domElement.style.position='absolute'; labelRenderer.domElement.style.top='0'; labelRenderer.domElement.style.pointerEvents='none';
-  document.getElementById('labelLayer').appendChild(labelRenderer.domElement);
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true; controls.dampingFactor = 0.08; controls.minDistance = 6; controls.maxDistance = 44; controls.maxPolarAngle = Math.PI*0.49;
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(10,18,8); scene.add(key);
-  const rim = new THREE.DirectionalLight(0x38d4c4, 0.22); rim.position.set(-8,6,-10); scene.add(rim);
-  dynamicGroup = new THREE.Group(); scene.add(dynamicGroup);
-  raycaster = new THREE.Raycaster(); pointer = new THREE.Vector2();
-  renderer.domElement.addEventListener('click', onCanvasClick);
-  window.addEventListener('resize', onResize);
-  sceneReady = true; animate();
-}
-function clearDynamic(){
-  interactiveMeshes.length = 0; selectedOutline = null; selectedFill = null;
-  while (dynamicGroup.children.length) dynamicGroup.remove(dynamicGroup.children[0]);
-}
-function onResize(){
-  const holder = document.getElementById('canvasHolder'); const w = holder.clientWidth, h = holder.clientHeight;
-  camera.aspect = w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h); labelRenderer.setSize(w,h);
-}
-function animate(){ requestAnimationFrame(animate); if (controls.enabled) controls.update(); renderer.render(scene,camera); labelRenderer.render(scene,camera); }
-function animateCameraIntro(to, lookAt){
-  controls.enabled = false;
-  const from = { x:0, y:26, z:0.01 }, duration=1300, start=performance.now();
-  const ease = t => 1-Math.pow(1-t,3);
-  function step(now){
-    const t = Math.min(1,(now-start)/duration), k = ease(t);
-    camera.position.set(from.x+(to.x-from.x)*k, from.y+(to.y-from.y)*k, from.z+(to.z-from.z)*k);
-    camera.lookAt(lookAt.x, lookAt.y, lookAt.z);
-    if (t<1) requestAnimationFrame(step); else { controls.enabled=true; controls.target.copy(lookAt); }
-  }
-  requestAnimationFrame(step);
-}
-function onCanvasClick(e){
-  const rect = renderer.domElement.getBoundingClientRect();
-  pointer.x = ((e.clientX-rect.left)/rect.width)*2-1; pointer.y = -((e.clientY-rect.top)/rect.height)*2+1;
-  raycaster.setFromCamera(pointer, camera);
-  const hits = raycaster.intersectObjects(interactiveMeshes);
-  if (hits.length === 0){ closePanel(); return; }
-  selectHitbox(hits[0].object);
-}
-function selectHitbox(mesh){
-  if (selectedOutline) selectedOutline.material.opacity = 0;
-  if (selectedFill) selectedFill.material.opacity = 0;
-  const outline = mesh.userData.outline;
-  const fill = mesh.userData.fill;
-  if (outline){ outline.material.opacity = 1; selectedOutline = outline; }
-  if (fill){ fill.material.opacity = 0.42; selectedFill = fill; }
-  openUnitPanel(mesh.userData.payload);
-}
-
-/* -------- ground plate for a structure -------- */
-function addGroundPlate(span, tone){
-  const g = new THREE.Mesh(new THREE.PlaneGeometry(span*2.2, span*2.2), new THREE.MeshStandardMaterial({ map:createGroundTexture(tone), roughness:0.95 }));
-  g.rotation.x = -Math.PI/2; g.position.y = -0.02; dynamicGroup.add(g);
-}
-
-/* -------- generic realistic structure builder -------- */
-function enterStructure3D(entity, opts={}){
-  ensureScene(); clearDynamic();
-  view3DActive = true; view3d.classList.add('active'); legend.classList.add('show');
-  return3DTarget = opts.return3D === 'citizenProps' ? 'citizenProps' : `${currentTierKey}-2d`;
-  if (return3DTarget !== 'citizenProps') document.getElementById(return3DTarget).classList.add('fading');
-
-  const UNIT_W=2, UNIT_D=4, GAP=0.2;
-  const isSingle = entity.unitsPerFloor === 1;
-  const width = isSingle ? UNIT_W*2+GAP : UNIT_W*2+GAP;
-  const totalHeight = entity.floors * entity.floorHeight;
-
-  const groundTone = entity.buildingKind==='hutment' ? '#2a2216' : '#12161f';
-  addGroundPlate(width, groundTone);
-
-  const facadeColors = { tower:'#3a4a63', bungalow:'#5a4a3a', hutment:'#6b5842', airport:'#3a4750' };
-  const baseColor = facadeColors[entity.buildingKind] || '#3a4a63';
-  const floorsForRepeat = Math.max(1, entity.floors);
-  const tex = createWindowTexture(baseColor, Math.max(1, Math.round(width/1.6)), floorsForRepeat, { cols:6, rows:3, litRatio:0.3 });
-
-  // plinth
-  const plinth = new THREE.Mesh(new THREE.BoxGeometry(width+0.5, 0.4, UNIT_D+0.5), new THREE.MeshStandardMaterial({ color:0x1c2230, roughness:0.9 }));
-  plinth.position.set(0, -0.2, 0); dynamicGroup.add(plinth);
-
-  // main body
-  const bodyGeo = new THREE.BoxGeometry(width, totalHeight, UNIT_D);
-  const bodyMat = new THREE.MeshStandardMaterial({ map:tex, roughness:0.75, metalness:0.05 });
-  const body = new THREE.Mesh(bodyGeo, bodyMat);
-  body.position.set(0, totalHeight/2, 0);
-  dynamicGroup.add(body);
-  const bodyEdges = new THREE.LineSegments(new THREE.EdgesGeometry(bodyGeo), new THREE.LineBasicMaterial({ color:0x05070c }));
-  bodyEdges.position.copy(body.position); dynamicGroup.add(bodyEdges);
-
-  // ground floor glass lobby overlay
-  const lobby = new THREE.Mesh(new THREE.BoxGeometry(width*0.9, entity.floorHeight*0.92, UNIT_D+0.15),
-    new THREE.MeshStandardMaterial({ color:0x0c1622, roughness:0.25, metalness:0.4, transparent:true, opacity:0.55 }));
-  lobby.position.set(0, entity.floorHeight/2, 0); dynamicGroup.add(lobby);
-
-  // rooftop detail (towers only)
-  if (entity.buildingKind === 'tower'){
-    const topY = totalHeight;
-    if (entity.roofType === 'setback'){
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(width*0.6, entity.floorHeight*0.6, UNIT_D*0.6), bodyMat);
-      cap.position.set(0, topY + entity.floorHeight*0.3, 0); dynamicGroup.add(cap);
-    } else if (entity.roofType === 'narrow'){
-      const cap = new THREE.Mesh(new THREE.BoxGeometry(width*0.7, entity.floorHeight*1.2, UNIT_D*0.7), bodyMat);
-      cap.position.set(0, topY + entity.floorHeight*0.6, 0); dynamicGroup.add(cap);
-    } else if (entity.roofType === 'tank'){
-      const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.9,10), new THREE.MeshStandardMaterial({ color:0x8a8f9a, roughness:0.6 }));
-      tank.position.set(width*0.25, topY+0.45, UNIT_D*0.2); dynamicGroup.add(tank);
-      [[-0.6,0.15],[0.2,0.55]].forEach(([dx,dz]) => {
-        const ac = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.25,0.4), new THREE.MeshStandardMaterial({ color:0x555f70 }));
-        ac.position.set(dx, topY+0.13, UNIT_D*dz); dynamicGroup.add(ac);
-      });
-    } else if (entity.roofType === 'garden'){
-      const slab = new THREE.Mesh(new THREE.BoxGeometry(width*0.95, 0.18, UNIT_D*0.95), new THREE.MeshStandardMaterial({ color:0x3a5a3f, roughness:0.9 }));
-      slab.position.set(0, topY+0.09, 0); dynamicGroup.add(slab);
-    }
-  }
-
-  // pitched roof for bungalow/hutment
-  if (entity.buildingKind === 'bungalow' || entity.buildingKind === 'hutment'){
-    const roofH = entity.buildingKind==='bungalow' ? 1.4 : 0.9;
-    const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(width,UNIT_D)*0.72, roofH, 4),
-      new THREE.MeshStandardMaterial({ color: entity.buildingKind==='bungalow' ? 0x8a4b3a : 0x5a4632, roughness:0.85 }));
-    roof.rotation.y = Math.PI/4; roof.position.set(0, totalHeight+roofH/2, 0); dynamicGroup.add(roof);
-  }
-
-  // balconies (towers, residential floors only, alternate floors)
-  if (entity.buildingKind === 'tower'){
-    for (let f=1; f<=entity.floors; f+=2){
-      const midY = (f-1)*entity.floorHeight + entity.floorHeight/2;
-      [-1,1].forEach(side => {
-        const bal = new THREE.Mesh(new THREE.BoxGeometry(1.6,0.15,0.5), new THREE.MeshStandardMaterial({ color:0x8a8f9a, roughness:0.7 }));
-        bal.position.set(side*(width/4), midY-0.6, UNIT_D/2+0.25); dynamicGroup.add(bal);
-      });
-    }
-  }
-
-  // floor slabs (visual separators) + labels
-  for (let f=0; f<=entity.floors; f++){
-    const slab = new THREE.Mesh(new THREE.BoxGeometry(width+0.35, 0.06, UNIT_D+0.35), new THREE.MeshStandardMaterial({ color:0x0e131e, roughness:0.85 }));
-    slab.position.set(0, f*entity.floorHeight, 0); dynamicGroup.add(slab);
-  }
-  for (let f=1; f<=entity.floors; f++){
-    const midY = (f-1)*entity.floorHeight + entity.floorHeight/2;
-    const div = document.createElement('div'); div.className = 'floor-tag mono';
-    div.textContent = `F${pad(f)} · ${((f-1)*entity.floorHeight).toFixed(1)}–${(f*entity.floorHeight).toFixed(1)}m`;
-    const label = new CSS2DObject(div); label.position.set(-(width/2)-0.5, midY, UNIT_D/2+0.3); dynamicGroup.add(label);
-  }
-
-  // per-unit hitboxes: clickable for owner (or all, in gov mode) / muted-grey overlay for others (citizen mode)
-  const unitMeshMap = {};
-  entity.units.forEach(u => {
-    const h = u.zTop - u.zBottom;
-    const uw = isSingle ? width : UNIT_W;
-    const geo = new THREE.BoxGeometry(uw, h, UNIT_D);
-    const xOff = isSingle ? 0 : (UNIT_W/2+GAP/2) * (u.side==='left' ? -1 : 1);
-    const isOwned = !opts.citizenFilterOwner || u.owner === opts.citizenFilterOwner;
-
-    if (isOwned){
-      const hit = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ transparent:true, opacity:0.001, depthWrite:false }));
-      hit.position.set(xOff, u.zBottom+h/2, 0);
-      // bright edge outline
-      const outline = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color:0x5cf5e6, transparent:true, opacity:0 }));
-      outline.position.copy(hit.position);
-      // slightly larger translucent glow fill — this is what makes the selected unit unmistakable
-      const fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color:0x38d4c4, transparent:true, opacity:0, depthWrite:false }));
-      fill.position.copy(hit.position); fill.scale.setScalar(1.035);
-      hit.userData = { outline, fill, payload:{ kind:'unit', ...u, structureID: entity.structureID } };
-      dynamicGroup.add(hit); dynamicGroup.add(outline); dynamicGroup.add(fill);
-      interactiveMeshes.push(hit);
-      unitMeshMap[`${u.floorNum}-${u.unitNum}`] = hit;
-    } else {
-      const fog = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color:0x5a6478, transparent:true, opacity:0.55, roughness:0.9 }));
-      fog.position.set(xOff, u.zBottom+h/2, 0);
-      dynamicGroup.add(fog);
-    }
-  });
-
-  const focusY = opts.focusUnit ? (opts.focusUnit.zBottom+opts.focusUnit.zTop)/2 : totalHeight/2;
-  animateCameraIntro({ x: width*1.5, y: totalHeight*0.7+4, z: width*1.5 }, new THREE.Vector3(0, focusY, 0));
-
-  if (currentPortal === 'gov'){
-    buildUnitListPanel(entity, unitMeshMap);
-  } else {
-    hideUnitListPanel();
-  }
-
-  if (currentPortal === 'gov' && currentTierKey === 'tier1' && entity.unitsPerFloor === 2){
-    setStatus('idle','Running topology validation…');
-    setTimeout(() => {
-      const r = runTopologyCheck(entity.units, entity.floors, entity.unitsPerFloor);
-      setStatus('ok', `Topology OK — ${r.conflicts} conflicts across ${r.unitsChecked} units / ${r.floorsChecked} floors`);
-    }, 500);
-  } else {
-    setStatus('idle', opts.citizenFilterOwner ? `Viewing your property in ${entity.structureID}` : `Viewing structure ${entity.structureID}`);
-  }
-}
-
-/* -------- corridor (bridge + train) -------- */
-function enterCorridor3D(entity){
-  ensureScene(); clearDynamic();
-  view3DActive = true; view3d.classList.add('active'); legend.classList.add('show');
-  return3DTarget = `${currentTierKey}-2d`;
-  document.getElementById(return3DTarget).classList.add('fading');
-
-  hideUnitListPanel();
-  const deckY = entity.zBottom;
-  addGroundPlate(12, '#0d1017');
-  const deckMat = new THREE.MeshStandardMaterial({ color:0x38d4c4, roughness:0.5, metalness:0.15 });
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(16,0.5,1.6), deckMat);
-  deck.position.set(0, deckY, 0);
-  const hit = new THREE.Mesh(new THREE.BoxGeometry(16,0.5,1.6), new THREE.MeshBasicMaterial({ transparent:true, opacity:0.001, depthWrite:false }));
-  hit.position.copy(deck.position);
-  const outline = new THREE.LineSegments(new THREE.EdgesGeometry(deck.geometry), new THREE.LineBasicMaterial({ color:0x38d4c4, transparent:true, opacity:0 }));
-  outline.position.copy(deck.position);
-  hit.userData = { outline, payload:{ kind:'corridor-part', ulpin:entity.ulpin, base:entity.base, structureID:entity.structureID, zBottom:entity.zBottom, zTop:entity.zTop } };
-  dynamicGroup.add(deck); dynamicGroup.add(hit); dynamicGroup.add(outline);
-  interactiveMeshes.push(hit);
-
-  [-6,0,6].forEach(x => {
-    const pier = new THREE.Mesh(new THREE.BoxGeometry(0.6,deckY,0.6), new THREE.MeshStandardMaterial({ color:0x263047, roughness:0.8 }));
-    pier.position.set(x, deckY/2, 0); dynamicGroup.add(pier);
-  });
-  const train = new THREE.Mesh(new THREE.BoxGeometry(3.4,0.9,1.2), new THREE.MeshStandardMaterial({ color:0xe7ecf5, roughness:0.4 }));
-  train.position.set(-1.5, deckY+0.5+0.45, 0); dynamicGroup.add(train);
-
-  const div = document.createElement('div'); div.className = 'floor-tag mono';
-  div.textContent = `Deck · ${entity.zBottom.toFixed(1)}–${entity.zTop.toFixed(1)}m`;
-  const label = new CSS2DObject(div); label.position.set(-9.2, deckY, 1.2); dynamicGroup.add(label);
-
-  animateCameraIntro({ x:14, y:deckY+8, z:14 }, new THREE.Vector3(0, deckY, 0));
-  setStatus('idle', `Viewing ${entity.label}`);
-}
-
-/* =========================================================================
-   8. PANELS
-   ========================================================================= */
-const unitListPanel = document.getElementById('unitListPanel');
-function hideUnitListPanel(){ unitListPanel.classList.remove('open'); }
-function buildUnitListPanel(entity, unitMeshMap){
-  document.getElementById('ulpTitle').textContent = entity.label || entity.structureID;
-  document.getElementById('ulpSub').textContent = `${entity.floors} floor${entity.floors>1?'s':''} · ${entity.units.length} unit${entity.units.length>1?'s':''}`;
-  const body = document.getElementById('unitListBody');
-  body.innerHTML = '';
-  // top floor first, like scanning a building from the roof down
-  const sorted = [...entity.units].sort((a,b) => (b.floorNum - a.floorNum) || (a.unitNum - b.unitNum));
-  sorted.forEach(u => {
-    const row = document.createElement('div');
-    row.className = 'unitRow';
-    row.dataset.key = `${u.floorNum}-${u.unitNum}`;
-    row.innerHTML = `<span class="ulpinTiny">${u.ulpin}</span><span class="tinyBadge ${badgeClassFor(u.unitType)}">${u.unitType}</span>`;
-    row.addEventListener('click', () => {
-      const hit = unitMeshMap[row.dataset.key];
-      if (!hit) return;
-      body.querySelectorAll('.unitRow').forEach(r => r.classList.remove('rowSelected'));
-      row.classList.add('rowSelected');
-      selectHitbox(hit);
-    });
-    body.appendChild(row);
-  });
-  unitListPanel.classList.add('open');
-}
-
-const panel = document.getElementById('panel');
-document.getElementById('panelClose').addEventListener('click', closePanel);
-document.getElementById('ownerToggle').addEventListener('click', () => {
-  document.getElementById('ownerDetailsBody').classList.toggle('open');
-});
-
-function closePanel(){
-  panel.classList.remove('open');
-  if (selectedOutline){ selectedOutline.material.opacity = 0; selectedOutline = null; }
-  if (selectedFill){ selectedFill.material.opacity = 0; selectedFill = null; }
-}
-function resetOwnerTab(){
-  document.getElementById('ownerToggle').style.display = 'none';
-  document.getElementById('ownerDetailsBody').classList.remove('open');
-}
-
-function openUnitPanel(u){
-  resetOwnerTab();
-  if (u.kind === 'corridor-part'){
-    document.getElementById('panelEyebrow').textContent = 'Generated Corridor ID';
-    setUlpinBox(u.ulpin, false);
-    document.getElementById('panelOwnerLabel').textContent = 'Managed by';
-    document.getElementById('panelOwner').textContent = 'Public Infrastructure — Metro Rail Corporation';
-    setBadge('Elevated Corridor', 'corridor');
-    document.getElementById('panelLocationField').style.display = 'none';
-    setZ(u.zBottom, u.zTop, 15);
-    document.getElementById('panelNote').textContent = 'Elevated transport corridor — air-rights easement. It does not belong to any single surface parcel below it.';
-    panel.classList.add('open'); return;
-  }
-  document.getElementById('panelEyebrow').textContent = 'Generated 3D ULPIN';
-  setUlpinBox(u.ulpin, false);
-  document.getElementById('panelOwnerLabel').textContent = 'Owner';
-  document.getElementById('panelOwner').textContent = u.owner;
-  setBadge(u.unitType, badgeClassFor(u.unitType));
-  document.getElementById('panelLocationField').style.display = 'block';
-  document.getElementById('panelLocation').textContent = `Floor ${pad(u.floorNum)} · Unit ${pad(u.unitNum)} (${u.side})`;
-  setZ(u.zBottom, u.zTop, u.zTop + (u.zTop-u.zBottom)*2);
-  document.getElementById('panelNote').textContent = 'Z-range is computed from floor height, not just labeled — this is what makes the ID volumetric rather than a 2D address with a floor number attached.';
-
-  const isRealOwner = !u.owner.startsWith('—');
-  if (currentPortal === 'gov' && isRealOwner){
-    const od = ownerDetailsFor(u.owner);
-    document.getElementById('odPhone').textContent = od.phone;
-    document.getElementById('odAge').textContent = od.age;
-    document.getElementById('odGender').textContent = od.gender;
-    document.getElementById('ownerToggle').style.display = 'flex';
-  }
-  panel.classList.add('open');
-}
-
-function openLandPanel(l){
-  resetOwnerTab();
-  document.getElementById('panelEyebrow').textContent = 'Generated Surface ULPIN';
-  setUlpinBox(generateSurfaceULPIN(l.base, l.structureID), l.unresolved);
-  document.getElementById('panelOwnerLabel').textContent = 'Owner';
-  if (l.unresolved){
-    document.getElementById('panelOwner').innerHTML = 'Unknown — ownership unverified.<br>Records pending at Taluka office.';
-    setBadge('Unverified Ownership', 'unknown');
-  } else {
-    document.getElementById('panelOwner').textContent = l.owner;
-    setBadge('Agricultural Land', 'agri');
-    if (currentPortal === 'gov'){
-      const od = ownerDetailsFor(l.owner);
-      document.getElementById('odPhone').textContent = od.phone;
-      document.getElementById('odAge').textContent = od.age;
-      document.getElementById('odGender').textContent = od.gender;
-      document.getElementById('ownerToggle').style.display = 'flex';
-    }
-  }
-  document.getElementById('panelLocationField').style.display = 'block';
-  document.getElementById('panelLocation').textContent = `${l.crop} · ${l.area}`;
-  document.getElementById('panelZField').style.display = 'none';
-  document.getElementById('panelNote').textContent = l.unresolved
-    ? 'The system still assigns a valid spatial ID from geo-referenced coordinates even without a resolved ownership record — it flags the gap for manual reconciliation instead of blocking ID generation.'
-    : 'Surface-only parcel — no vertical subdivision, so no Z-range is generated for it.';
-  panel.classList.add('open');
-}
-
-function setUlpinBox(text, warn){ const box = document.getElementById('panelUlpin'); box.textContent = text; box.className = 'ulpin mono' + (warn ? ' warnbox' : ''); }
-function setBadge(text, cls){ const b = document.getElementById('panelBadge'); b.textContent = text; b.className = 'badge ' + cls; }
-function setZ(zBottom, zTop, maxZ){
-  document.getElementById('panelZField').style.display = 'block';
-  document.getElementById('panelZ').textContent = `${zBottom.toFixed(1)}m — ${zTop.toFixed(1)}m`;
-  const fill = document.getElementById('panelZFill');
-  fill.style.left = `${(zBottom/maxZ)*100}%`; fill.style.width = `${((zTop-zBottom)/maxZ)*100}%`;
-}
-</script>
+<script type="module" src="src/main.js"></script>
 </body>
 </html>
