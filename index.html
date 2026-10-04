@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>3D ULPIN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ 3D VIEWPORT (always mounted, screens float above it) ============ -->
+  <div id="viewport">
+    <div id="canvasHolder"></div>
+    <div id="labelLayer"></div>
+    <div id="scrim"></div>
+    <div id="hoverTip"></div>
+  </div>
+
+  <!-- ============ TOP BAR ============ -->
+  <header id="topbar">
+    <div class="brandRow">
+      <button id="backBtn" title="Back (Esc)"><span>‹</span></button>
+      <div class="brand">
+        <div class="brandMark">3D<span>ULPIN</span></div>
+        <div class="crumb" id="crumb">Vertical Property Mapping</div>
+      </div>
+    </div>
+    <div class="topRight">
+      <div id="statusPill"><i class="dot"></i><span id="statusText">Ready</span></div>
+      <button id="logoutBtn" class="ghostBtn" hidden>Log out</button>
+    </div>
+  </header>
+
+  <!-- ============ VIEWER HUD ============ -->
+  <div id="hud" hidden>
+    <div class="hudGroup">
+      <button class="hudBtn" id="btnPlan" title="Top-down plan view">
+        <svg viewBox="0 0 20 20"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 10h14M10 3v14"/></svg><span>Plan</span>
+      </button>
+      <button class="hudBtn" id="btnOrbit" title="Reset the orbit camera">
+        <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6"/><ellipse cx="10" cy="10" rx="9" ry="3.5"/></svg><span>Orbit</span>
+      </button>
+    </div>
+    <div class="hudGroup">
+      <button class="hudBtn" id="btnXray" title="Show the volumetric parcels inside the shell">
+        <svg viewBox="0 0 20 20"><rect x="4" y="4" width="12" height="12" rx="1.5"/><path d="M4 12h12M10 4v12"/></svg><span>Volumes</span>
+      </button>
+      <div class="hudSlider" id="explodeWrap" title="Separate the floors vertically">
+        <label>Explode</label>
+        <input type="range" id="explode" min="0" max="100" value="0">
+      </div>
+      <button class="hudBtn" id="btnLabels" class="on" title="Toggle floor labels">
+        <svg viewBox="0 0 20 20"><path d="M3 6h14M3 10h9M3 14h11"/></svg><span>Labels</span>
+      </button>
+    </div>
+    <div class="hudGroup">
+      <button class="hudBtn accent" id="btnValidate" title="Re-run the stage-5 topology check">
+        <svg viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9"/></svg><span>Validate topology</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ LEFT: STRUCTURE UNIT LIST (government portal) ============ -->
+  <aside id="unitList" hidden>
+    <div class="ulHead">
+      <div class="ulTitle" id="ulTitle">Structure</div>
+      <div class="ulSub" id="ulSub">—</div>
+    </div>
+    <div class="ulFilter">
+      <input id="ulSearch" type="text" placeholder="Filter units, owners, ULPIN…">
+    </div>
+    <div class="ulBody" id="ulBody"></div>
+    <div class="ulFoot" id="ulFoot">—</div>
+  </aside>
+
+  <!-- ============ RIGHT: RECORD PANEL ============ -->
+  <aside id="record" hidden>
+    <button class="closeBtn" id="recordClose">✕</button>
+    <div class="recHead">
+      <div class="eyebrow" id="recEyebrow">Generated 3D ULPIN</div>
+      <div class="ulpinBox mono" id="recUlpin">—</div>
+      <div class="segRow" id="recSegments"></div>
+    </div>
+    <nav class="tabs" id="recTabs">
+      <button data-tab="identity" class="on">Identity</button>
+      <button data-tab="geometry">Geometry</button>
+      <button data-tab="owner">Owner</button>
+    </nav>
+    <div class="tabPane on" data-pane="identity" id="paneIdentity"></div>
+    <div class="tabPane" data-pane="geometry" id="paneGeometry"></div>
+    <div class="tabPane" data-pane="owner" id="paneOwner"></div>
+  </aside>
+
+  <!-- ============ LEFT STACK: derivation note + legend ============ -->
+  <div id="leftStack">
+    <div id="siteNote" hidden></div>
+    <div id="legend" hidden></div>
+  </div>
+
+  <!-- ============ TOASTS ============ -->
+  <div id="toasts"></div>
+
+  <!-- ============ SCREENS ============ -->
+
+  <!-- HUB -->
+  <section class="screen scroll active" id="hub">
+    <div class="wrap">
+      <div class="hero">
+        <div class="kicker">Smart India Hackathon · Smart Automation</div>
+        <h1>3D <em>ULPIN</em> &amp; Vertical Property Mapping</h1>
+        <p class="sub">A volumetric cadastre: unique spatial identities for surface parcels, every floor and unit above
+          them, and the infrastructure that crosses between. One dataset, four prototype stages, one app.</p>
+        <div class="idStrip mono">
+          <span class="s1">KA1234567890AB</span><span class="s2">-B01</span><span class="s3">-F07</span><span class="s4">-U12</span><span class="s5">-Z(21.0-24.0m)</span>
+        </div>
+        <div class="idStripKey">
+          <span><i style="background:var(--text)"></i>Base ULPIN — existing 14-char surface code</span>
+          <span><i style="background:var(--teal)"></i>Structure</span>
+          <span><i style="background:var(--amber)"></i>Floor</span>
+          <span><i style="background:var(--violet)"></i>Unit</span>
+          <span><i style="background:var(--green)"></i>Elevation band</span>
+        </div>
+      </div>
+
+      <div class="grid3">
+        <article class="card lift" data-go="p1">
+          <div class="cardTop"><span class="tag t-teal">Prototype 1</span></div>
+          <h3>Single Building</h3>
+          <p>One parcel, one structure — 5 floors × 2 units over a basement parking level, with a commercial unit at
+            grade. The plan view lifts into a fully modelled tower and the topology check runs live.</p>
+          <div class="chips"><span>Plan → 3D</span><span>DEM / DSM</span><span>Stage 5 check</span></div>
+          <div class="cardGo">Open <span>→</span></div>
+        </article>
+        <article class="card lift" data-go="p2">
+          <div class="cardTop"><span class="tag t-amber">Prototype 2</span></div>
+          <h3>Multi-Tier Locality</h3>
+          <p>Tier 1, 2 and 3 densities as real 3D localities: towers, elevated metro viaducts with a running train, an
+            airport, bungalows, hutments, farmland, and one unresolved-ownership parcel.</p>
+          <div class="chips"><span>Air-rights</span><span>Corridor IDs</span><span>Edge cases</span></div>
+          <div class="cardGo">Open <span>→</span></div>
+        </article>
+        <article class="card lift" data-go="p34">
+          <div class="cardTop"><span class="tag t-violet">Prototype 3 + 4</span></div>
+          <h3>Digital Twin Portals</h3>
+          <p>Government and Citizen portals over identical data. The government sees every unit and owner record; a
+            citizen sees only their own volume and nothing else in the building.</p>
+          <div class="chips"><span>Role-based access</span><span>Unit register</span><span>Owner records</span></div>
+          <div class="cardGo">Open <span>→</span></div>
+        </article>
+      </div>
+
+      <div class="grid3 tight">
+        <article class="card mini" data-go="docs" data-anchor="secScheme">
+          <h4>Scheme &amp; algorithm</h4>
+          <p>Problem statement, ID anatomy, why the Z-range is non-negotiable, the 9-step pipeline.</p>
+        </article>
+        <article class="card mini" data-go="docs" data-anchor="secValidator">
+          <h4>Topology validator</h4>
+          <p>Interactive: overlap the footprints, overlap the bands, watch the rule decide.</p>
+        </article>
+        <article class="card mini" data-go="docs" data-anchor="secEvolution">
+          <h4>Prototype log &amp; limits</h4>
+          <p>What each of the four builds added, and every simplification stated openly.</p>
+        </article>
+      </div>
+
+      <footer class="hubFoot">
+        <div><b>Everything traces to one Base ULPIN family.</b> Tower units, bungalows, hutments, a metro deck,
+        farmland, even the barren plot with no verified owner — all derive from the same 14-character surface code, so
+        nothing in this build is a disconnected mock-up.</div>
+        <div class="keys mono">Drag orbit · Scroll zoom · <b>Esc</b> back · <b>X</b> volumes · <b>P</b> plan</div>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ROLE SELECT -->
+  <section class="screen center" id="roleSelect">
+    <div class="pickWrap">
+      <div class="pickHead">
+        <h2>Choose a <em>portal</em></h2>
+        <p>The same spatial records, two very different levels of access.</p>
+      </div>
+      <div class="pickRow">
+        <article class="card lift pick gov" id="pickGov">
+          <div class="cardTop"><span class="tag t-teal">Full access</span></div>
+          <h3>Government Portal</h3>
+          <p>Revenue department view — every parcel, every unit, the complete owner register, across all three tiers.</p>
+          <div class="chips"><span>Unit register</span><span>Restricted PII</span><span>All tiers</span></div>
+          <div class="cardGo">Enter <span>→</span></div>
+        </article>
+        <article class="card lift pick cit" id="pickCitizen">
+          <div class="cardTop"><span class="tag t-violet">Restricted access</span></div>
+          <h3>Citizen Portal</h3>
+          <p>Log in as an owner and see only the volumes you hold. Every other unit is a blank grey block.</p>
+          <div class="chips"><span>My properties</span><span>Masked neighbours</span><span>No PII</span></div>
+          <div class="cardGo">Log in <span>→</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIER SELECT -->
+  <section class="screen center" id="tierSelect">
+    <div class="pickWrap">
+      <div class="pickHead">
+        <h2>Choose a locality <em>tier</em></h2>
+        <p>Each tier puts the same ID scheme under a different urban density.</p>
+      </div>
+      <div class="pickRow three">
+        <article class="card lift pick" data-tier="tier1">
+          <div class="cardTop"><span class="tag t-teal">Tier 1</span></div>
+          <h3>Dense vertical core</h3>
+          <p>Four towers, two elevated metro corridors and an airport parcel on one locality boundary.</p>
+          <div class="chips"><span>4 towers</span><span>2 viaducts</span><span>Airport</span></div>
+          <div class="cardGo">Enter <span>→</span></div>
+        </article>
+        <article class="card lift pick" data-tier="tier2">
+          <div class="cardTop"><span class="tag t-amber">Tier 2</span></div>
+          <h3>Low-rise mixed</h3>
+          <p>Two mid-rise towers surrounded by independent bungalows on their own plots.</p>
+          <div class="chips"><span>2 towers</span><span>5 bungalows</span></div>
+          <div class="cardGo">Enter <span>→</span></div>
+        </article>
+        <article class="card lift pick" data-tier="tier3">
+          <div class="cardTop"><span class="tag t-green">Tier 3</span></div>
+          <h3>Rural &amp; agricultural</h3>
+          <p>Crop parcels, hutments, and one barren plot whose ownership record is still unresolved.</p>
+          <div class="chips"><span>Farmland</span><span>Hutments</span><span>Unverified plot</span></div>
+          <div class="cardGo">Enter <span>→</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- CITIZEN LOGIN -->
+  <section class="screen center" id="citizenLogin">
+    <div class="loginWrap">
+      <div class="pickHead">
+        <h2>Citizen <em>login</em></h2>
+        <p>Prototype gate — not real authentication.</p>
+      </div>
+      <form class="loginCard" id="loginForm" autocomplete="off">
+        <label for="loginUser">Username</label>
+        <input id="loginUser" type="text" placeholder="rohan" autocomplete="off">
+        <label for="loginPass">Password</label>
+        <input id="loginPass" type="password" placeholder="demo123" autocomplete="off">
+        <div class="formErr" id="loginError">Incorrect username or password.</div>
+        <button class="primaryBtn" type="submit">Log in</button>
+        <div class="demoAccounts">
+          <div class="daHead">Demo accounts</div>
+          <button type="button" class="daRow" data-user="rohan"><b>rohan</b><span>demo123</span></button>
+          <button type="button" class="daRow" data-user="ananya"><b>ananya</b><span>demo123</span></button>
+          <button type="button" class="daRow" data-user="vikram"><b>vikram</b><span>demo123</span></button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- CITIZEN PROPERTIES -->
+  <section class="screen scroll" id="citizenProps">
+    <div class="wrap narrow">
+      <div class="pickHead left">
+        <h2>My <em>properties</em></h2>
+        <p id="propsCount">—</p>
+      </div>
+      <div id="propsList" class="propsList"></div>
+    </div>
+  </section>
+
+  <!-- DOCS -->
+  <section class="screen scroll" id="docs"><div class="wrap" id="docsWrap"></div></section>
+
+  <!-- LOADER -->
+  <div id="loader"><div class="ring"></div><div class="loadMsg">Building the digital twin…</div></div>
+
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
